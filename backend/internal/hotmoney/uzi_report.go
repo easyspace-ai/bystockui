@@ -158,14 +158,27 @@ func findStandaloneHTML(dir string) string {
 	return ""
 }
 
+func uziReportsDirs(uziDir string) []string {
+	return []string{
+		filepath.Join(uziDir, "deep-analysis", "scripts", "reports"),
+		filepath.Join(uziDir, "skills", "deep-analysis", "scripts", "reports"),
+	}
+}
+
 func findLatestUZIStandaloneHTML(uziDir, tsCode string) string {
 	tsCode = strings.TrimSpace(tsCode)
 	if tsCode == "" {
 		return ""
 	}
-	reportsDir := filepath.Join(uziDir, "skills", "deep-analysis", "scripts", "reports")
-	matches, err := filepath.Glob(filepath.Join(reportsDir, tsCode+"_*", "full-report-standalone.html"))
-	if err != nil || len(matches) == 0 {
+	var matches []string
+	for _, reportsDir := range uziReportsDirs(uziDir) {
+		found, err := filepath.Glob(filepath.Join(reportsDir, tsCode+"_*", "full-report-standalone.html"))
+		if err != nil {
+			continue
+		}
+		matches = append(matches, found...)
+	}
+	if len(matches) == 0 {
 		return ""
 	}
 	sort.Slice(matches, func(i, j int) bool {

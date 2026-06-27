@@ -13,6 +13,7 @@ import (
 // TryUZICollect runs the optional UZI-Skill Python collector when HOTMONEY_UZI_DIR is configured.
 // Expected entry points (first match wins):
 //   - $HOTMONEY_UZI_DIR/scripts/collect_context.py
+//   - $HOTMONEY_UZI_DIR/deep-analysis/scripts/collect_context.py
 //   - $HOTMONEY_UZI_DIR/skills/deep-analysis/scripts/collect_context.py
 //   - $HOTMONEY_UZI_DIR/collect_context.py
 //
@@ -60,6 +61,7 @@ func uziPython() string {
 func findUZICollectScript(uziDir string) string {
 	candidates := []string{
 		filepath.Join(uziDir, "scripts", "collect_context.py"),
+		filepath.Join(uziDir, "deep-analysis", "scripts", "collect_context.py"),
 		filepath.Join(uziDir, "skills", "deep-analysis", "scripts", "collect_context.py"),
 		filepath.Join(uziDir, "collect_context.py"),
 	}
@@ -146,10 +148,13 @@ func uziDirCandidates() []string {
 
 	add("../UZI-Skill")
 	add("UZI-Skill")
+	add("../UZI-SKILL")
+	add("UZI-SKILL")
 
 	if cwd, err := os.Getwd(); err == nil {
 		for d := cwd; ; d = filepath.Dir(d) {
 			add(filepath.Join(d, "UZI-Skill"))
+			add(filepath.Join(d, "UZI-SKILL"))
 			parent := filepath.Dir(d)
 			if parent == d {
 				break
@@ -160,6 +165,7 @@ func uziDirCandidates() []string {
 	if exe, err := os.Executable(); err == nil {
 		for d := filepath.Dir(exe); ; d = filepath.Dir(d) {
 			add(filepath.Join(d, "UZI-Skill"))
+			add(filepath.Join(d, "UZI-SKILL"))
 			parent := filepath.Dir(d)
 			if parent == d {
 				break

@@ -50,7 +50,7 @@ module.exports = {
       out_file: path.join(logsDir, 'aistock-out.log'),
       env: {
         NODE_ENV: 'production',
-        PORT: '8787',
+        PORT: '7200',
         AISTOCK_SERVE_WEB: '1',
         GIN_MODE: 'release',
       },
