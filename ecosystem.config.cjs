@@ -1,33 +1,40 @@
 /**
- * PM2 进程配置 — 单进程托管 aistock-server（前端已 embed 进二进制）
+ * PM2 — 服务器跑 backend（前端静态文件已 commit 在 internal/webui/webdist，go:embed 打进进程）
  *
  * 准备:
- *   make release
- *   cp release/.env.example release/.env   # 填写 AI_DATA_DIR、API Key 等
+ *   git pull
+ *   cd backend && cp .env.example .env
+ *   cd backend && go build -o bin/aistock-server ./cmd/server
+ *   或在仓库根: make backend-build
  *
  * 启动:
  *   pm2 start ecosystem.config.cjs
- *   pm2 save && pm2 startup   # 可选：开机自启
- *
- * 说明:
- *   - cwd 为 release/，Go 进程通过 godotenv 读取 release/.env
- *   - 日志写入仓库根 logs/（与 release 目录同级）
- *   - 仅需本进程即可提供 API + 静态前端（默认 PORT=8787）
  */
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 
 const root = path.resolve(__dirname);
-const releaseDir = path.join(root, 'release');
+const backendDir = path.join(root, 'backend');
 const logsDir = path.join(root, 'logs');
+const binary = path.join(backendDir, 'bin', 'aistock-server');
+
+if (!fs.existsSync(binary)) {
+  console.error(
+    '[aistock] 未找到 backend/bin/aistock-server，请先执行:\n' +
+      '  cd backend && go build -o bin/aistock-server ./cmd/server\n' +
+      '  或: make backend-build',
+  );
+  process.exit(1);
+}
 
 module.exports = {
   apps: [
     {
       name: 'aistock',
-      script: path.join(releaseDir, 'aistock-server'),
-      cwd: releaseDir,
+      script: binary,
+      cwd: backendDir,
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -41,7 +48,6 @@ module.exports = {
       merge_logs: true,
       error_file: path.join(logsDir, 'aistock-error.log'),
       out_file: path.join(logsDir, 'aistock-out.log'),
-      // 以下可被 release/.env 覆盖（应用内 godotenv.Load）
       env: {
         NODE_ENV: 'production',
         PORT: '8787',

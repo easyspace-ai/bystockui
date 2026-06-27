@@ -1,0 +1,8 @@
+// 复制为 go.work.local 并在仓库根执行: go work use -workfile=go.work.local ./backend ../bystock
+// 适用于 bystock 与 newstock 同级目录（如 /cms/stock/bystock 与 /cms/stock/newstock）
+go 1.25.3
+
+use (
+	./backend
+	../bystock
+)
