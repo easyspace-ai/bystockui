@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo, type MouseEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { clearAppliedStrategyParams, parseMomentumParams } from '@/features/picker/strategyParams';
+import { clearAppliedStrategyParams, momentumParamsFromRecord, parseMomentumParams } from '@/features/picker/strategyParams';
 import { usePickerSavedStrategy } from '@/features/picker/usePickerSavedStrategy';
 import { SavedStrategyRenameDialog } from '@/features/picker/SavedStrategyRenameDialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -402,6 +402,7 @@ const MOMENTUM_SCANNER_DEFAULTS = {
     '趋势要求避免逆势追高，活跃度保证候选具备真实成交基础。',
     '结果页统一切成表格，方便排序、比对和批量加入自选。',
   ],
+  conditionsLabel: '扫描条件',
 };
 
 export function MomentumScanner() {
@@ -472,6 +473,14 @@ export function MomentumScanner() {
       setSearchParams(clearAppliedStrategyParams(searchParams), { replace: true });
     }
   }, [searchParams, setSearchParams, toast]);
+
+  useEffect(() => {
+    const saved = displayMeta.savedStrategy;
+    if (!saved?.params || searchParams.get('applied') === '1') return;
+    const mapped = momentumParamsFromRecord(saved.params);
+    if (Object.keys(mapped).length === 0) return;
+    setConditions((prev) => ({ ...prev, ...mapped } as ScanConditions));
+  }, [displayMeta.savedStrategy?.id, displayMeta.savedStrategy, searchParams]);
 
   // 恢复默认设置
   const handleResetConditions = useCallback(() => {
@@ -649,7 +658,7 @@ export function MomentumScanner() {
         transition={{ duration: 0.5 }}
       >
         <div className="picker-page__headerMain">
-          <div className="picker-page__eyebrow">妖股扫描</div>
+          <div className="picker-page__eyebrow">{displayMeta.categoryLabel}</div>
           <div className="picker-page__titleBlock">
             <div className="picker-page__titleRow">
               <span className="picker-page__icon">
@@ -776,7 +785,7 @@ export function MomentumScanner() {
                 <div className={styles.conditionHeader}>
                   <div className={styles.conditionTitle}>
                     <SlidersHorizontal size={20} />
-                    <span>扫描条件</span>
+                    <span>{displayMeta.conditionsLabel}</span>
                   </div>
                   <div className={styles.conditionActions}>
                     <AnimatePresence mode="wait">

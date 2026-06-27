@@ -11,10 +11,10 @@ import (
 )
 
 // TryUZICollect runs the optional UZI-Skill Python collector when HOTMONEY_UZI_DIR is configured.
-// Expected entry points (first match wins):
-//   - $HOTMONEY_UZI_DIR/scripts/collect_context.py
-//   - $HOTMONEY_UZI_DIR/deep-analysis/scripts/collect_context.py
-//   - $HOTMONEY_UZI_DIR/skills/deep-analysis/scripts/collect_context.py
+// Expected entry points (first match wins; legacy layout preferred):
+//   - $HOTMONEY_UZI_DIR/skills/deep-analysis/scripts/collect_context.py  (legacy repo layout)
+//   - $HOTMONEY_UZI_DIR/scripts/collect_context.py                       (project / Hermes root scripts)
+//   - $HOTMONEY_UZI_DIR/deep-analysis/scripts/collect_context.py         (v3.6+ monorepo layout)
 //   - $HOTMONEY_UZI_DIR/collect_context.py
 //
 // The script receives ts_code as argv[1] and should print plain-text market context on stdout.
@@ -65,15 +65,38 @@ func CheckUZIPython(ctx context.Context) error {
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("%s", uziPythonTooOldMessage(python))
+		versionDetail := strings.TrimSpace(stderr.String())
+		if versionDetail == "" {
+			versionDetail = uziPythonVersionLine(ctx, python)
+		}
+		return fmt.Errorf("%s", uziPythonTooOldMessage(python, versionDetail))
 	}
 	return nil
 }
 
-func uziPythonTooOldMessage(python string) string {
+func uziPythonVersionLine(ctx context.Context, python string) string {
+	cmd := exec.CommandContext(ctx, python, "--version")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		if line := strings.TrimSpace(out.String()); line != "" {
+			return line
+		}
+		return strings.TrimSpace(err.Error())
+	}
+	return strings.TrimSpace(out.String())
+}
+
+func uziPythonTooOldMessage(python, versionDetail string) string {
+	extra := ""
+	if line := strings.TrimSpace(versionDetail); line != "" {
+		extra = fmt.Sprintf("（%s）", line)
+	}
 	return fmt.Sprintf(
-		"UZI-Skill 需要 Python 3.10+，当前 %s 版本过低。请安装 Python 3.11，在 UZI 目录执行 python3.11 -m venv .venv && pip install -r requirements.txt，并在 backend/.env 设置 HOTMONEY_UZI_PYTHON 指向 .venv/bin/python",
+		"UZI-Skill 需要 Python 3.10+，当前 %s 版本过低%s。请安装 Python 3.11，在 UZI 目录执行 python3.11 -m venv .venv && pip install -r requirements.txt，并在 backend/.env 设置 HOTMONEY_UZI_PYTHON 指向 .venv/bin/python",
 		python,
+		extra,
 	)
 }
 
@@ -85,9 +108,9 @@ func isUZIPythonSyntaxError(msg string) bool {
 
 func findUZICollectScript(uziDir string) string {
 	candidates := []string{
+		filepath.Join(uziDir, "skills", "deep-analysis", "scripts", "collect_context.py"),
 		filepath.Join(uziDir, "scripts", "collect_context.py"),
 		filepath.Join(uziDir, "deep-analysis", "scripts", "collect_context.py"),
-		filepath.Join(uziDir, "skills", "deep-analysis", "scripts", "collect_context.py"),
 		filepath.Join(uziDir, "collect_context.py"),
 	}
 	for _, p := range candidates {

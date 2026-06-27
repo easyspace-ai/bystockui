@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo, type MouseEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { clearAppliedStrategyParams, parseEndOfDayParams } from '@/features/picker/strategyParams';
+import { clearAppliedStrategyParams, endOfDayParamsFromRecord, parseEndOfDayParams } from '@/features/picker/strategyParams';
 import { usePickerSavedStrategy } from '@/features/picker/usePickerSavedStrategy';
 import { SavedStrategyRenameDialog } from '@/features/picker/SavedStrategyRenameDialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -499,6 +499,7 @@ const EOD_PICKER_DEFAULTS = {
     '再用分时强度过滤，找到尾盘阶段仍强于均价的股票。',
     '结果统一表格化，支持批量选择、排序和加自选。',
   ],
+  conditionsLabel: '筛选条件',
 };
 
 export function EndOfDayPicker() {
@@ -569,6 +570,14 @@ export function EndOfDayPicker() {
       setSearchParams(clearAppliedStrategyParams(searchParams), { replace: true });
     }
   }, [searchParams, setSearchParams, toast]);
+
+  useEffect(() => {
+    const saved = displayMeta.savedStrategy;
+    if (!saved?.params || searchParams.get('applied') === '1') return;
+    const mapped = endOfDayParamsFromRecord(saved.params);
+    if (Object.keys(mapped).length === 0) return;
+    setFilters((prev) => ({ ...prev, ...mapped } as FilterConditions));
+  }, [displayMeta.savedStrategy?.id, displayMeta.savedStrategy, searchParams]);
 
   // 恢复默认设置
   const handleResetFilters = useCallback(() => {
@@ -748,7 +757,7 @@ export function EndOfDayPicker() {
         transition={{ duration: 0.5 }}
       >
         <div className="picker-page__headerMain">
-          <div className="picker-page__eyebrow">尾盘选股</div>
+          <div className="picker-page__eyebrow">{displayMeta.categoryLabel}</div>
           <div className="picker-page__titleBlock">
             <div className="picker-page__titleRow">
               <span className="picker-page__icon">
@@ -858,7 +867,7 @@ export function EndOfDayPicker() {
                 <div className={styles.filterHeader}>
                   <div className={styles.filterTitle}>
                     <SlidersHorizontal size={20} />
-                    <span>筛选条件</span>
+                    <span>{displayMeta.conditionsLabel}</span>
                   </div>
                   <div className={styles.filterActions}>
                     <AnimatePresence mode="wait">

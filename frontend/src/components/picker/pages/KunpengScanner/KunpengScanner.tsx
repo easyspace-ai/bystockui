@@ -34,7 +34,7 @@ import {
   Fish,
 } from 'lucide-react';
 import { useToast } from '@/components/picker/common/Toast';
-import { clearAppliedStrategyParams, mapKunpengAIParams, parseKunpengParams } from '@/features/picker/strategyParams';
+import { clearAppliedStrategyParams, kunpengParamsFromRecord, mapKunpengAIParams, parseKunpengParams } from '@/features/picker/strategyParams';
 import { usePickerSavedStrategy } from '@/features/picker/usePickerSavedStrategy';
 import { SavedStrategyRenameDialog } from '@/features/picker/SavedStrategyRenameDialog';
 import { PickerLoadingOverlay, type PickerLoadingProgress } from '@/components/picker/common/PickerLoadingOverlay';
@@ -210,6 +210,7 @@ const KUNPENG_SCANNER_DEFAULTS = {
     '结果页统一改为表格，方便与其它两页保持一致的浏览和比较方式。',
     '加载进度弹窗支持关闭和停止，不再出现整页压暗的阻断体验。',
   ],
+  conditionsLabel: '鲲鹏战法条件',
 };
 
 export function KunpengScanner() {
@@ -333,6 +334,15 @@ export function KunpengScanner() {
       setSearchParams(clearAppliedStrategyParams(searchParams), { replace: true });
     }
   }, [searchParams, setSearchParams, toast]);
+
+  // 从「我的策略」打开时恢复保存的参数（刷新后 URL 可能只剩 savedId）
+  useEffect(() => {
+    const saved = displayMeta.savedStrategy;
+    if (!saved?.params || searchParams.get('applied') === '1') return;
+    const mapped = kunpengParamsFromRecord(saved.params);
+    if (Object.keys(mapped).length === 0) return;
+    setCriteria((prev) => ({ ...prev, ...mapped } as KunpengCriteria));
+  }, [displayMeta.savedStrategy?.id, displayMeta.savedStrategy, searchParams]);
 
   const handleResetCriteria = useCallback(() => {
     setCriteria(DEFAULT_CRITERIA);
@@ -1016,7 +1026,7 @@ export function KunpengScanner() {
         transition={{ duration: 0.5 }}
       >
         <div className="picker-page__headerMain">
-          <div className="picker-page__eyebrow">鲲鹏战法</div>
+          <div className="picker-page__eyebrow">{displayMeta.categoryLabel}</div>
           <div className="picker-page__titleBlock">
             <div className="picker-page__titleRow">
               <span className="picker-page__icon">
@@ -1126,7 +1136,7 @@ export function KunpengScanner() {
                 <div className={styles.criteriaHeader}>
                   <div className={styles.criteriaTitle}>
                     <SlidersHorizontal size={20} />
-                    <span>鲲鹏战法条件</span>
+                    <span>{displayMeta.conditionsLabel}</span>
                   </div>
                   <div className={styles.criteriaActions}>
                     <AnimatePresence mode="wait">

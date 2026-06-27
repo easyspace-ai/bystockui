@@ -164,8 +164,8 @@ func findStandaloneHTML(dir string) string {
 
 func uziReportsDirs(uziDir string) []string {
 	return []string{
-		filepath.Join(uziDir, "deep-analysis", "scripts", "reports"),
 		filepath.Join(uziDir, "skills", "deep-analysis", "scripts", "reports"),
+		filepath.Join(uziDir, "deep-analysis", "scripts", "reports"),
 	}
 }
 

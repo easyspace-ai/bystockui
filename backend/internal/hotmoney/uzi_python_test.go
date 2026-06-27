@@ -1,8 +1,11 @@
 package hotmoney
 
 import (
+	"context"
 	"errors"
 	"strings"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -22,8 +25,27 @@ func TestUserFacingUZIErrorPythonTooOld(t *testing.T) {
 }
 
 func TestUziPythonTooOldMessage(t *testing.T) {
-	msg := uziPythonTooOldMessage("python3")
+	msg := uziPythonTooOldMessage("python3", "Python 3.9.18")
 	if !strings.Contains(msg, "HOTMONEY_UZI_PYTHON") {
 		t.Fatalf("expected env hint in %q", msg)
 	}
+	if !strings.Contains(msg, "Python 3.9.18") {
+		t.Fatalf("expected version detail in %q", msg)
+	}
 }
+
+func TestCheckUZIPythonLocalVenv(t *testing.T) {
+	python := filepath.Join("..", "..", "..", "UZI-Skill", ".venv", "bin", "python")
+	abs, err := filepath.Abs(python)
+	if err != nil {
+		t.Fatalf("abs: %v", err)
+	}
+	if _, err := os.Stat(abs); err != nil {
+		t.Skipf("local UZI venv missing: %v", err)
+	}
+	t.Setenv("HOTMONEY_UZI_PYTHON", abs)
+	if err := CheckUZIPython(context.Background()); err != nil {
+		t.Fatalf("CheckUZIPython: %v", err)
+	}
+}
+

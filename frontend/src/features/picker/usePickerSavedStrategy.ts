@@ -13,17 +13,20 @@ export interface PickerStrategyDefaults {
   launchTitle: string;
   launchText: string;
   launchPoints: string[];
+  /** Label for the conditions panel when viewing the built-in template (e.g. 鲲鹏战法条件) */
+  conditionsLabel: string;
 }
 
 export interface PickerStrategyDisplayMeta {
-  /** Canonical strategy name (e.g. 鲲鹏战法), never overridden by saved custom labels */
+  /** Main page title — saved strategy name, or built-in template name */
   title: string;
-  /** Saved custom name when it differs from the canonical title */
-  customLabel: string | null;
+  /** Eyebrow / template category (e.g. 鲲鹏战法) */
+  categoryLabel: string;
   subtitle: string;
   launchTitle: string;
   launchText: string;
   launchPoints: string[];
+  conditionsLabel: string;
   isSaved: boolean;
   savedId: string | null;
   savedStrategy: SavedStrategyItem | null;
@@ -67,23 +70,20 @@ export function usePickerSavedStrategy(defaults: PickerStrategyDefaults) {
 
   const canonicalTitle = defaults.title;
   const savedLabel = savedStrategy?.label?.trim() || null;
-  const customLabel =
-    savedStrategy && savedLabel && savedLabel !== canonicalTitle ? savedLabel : null;
-  const description = savedStrategy?.description ?? defaults.subtitle;
-  const subtitle = customLabel
-    ? description && description !== customLabel
-      ? `${customLabel} · ${description}`
-      : customLabel
-    : description;
+  const title = savedLabel ?? canonicalTitle;
+  const categoryLabel = canonicalTitle;
+  const subtitle = savedStrategy?.description?.trim() || defaults.subtitle;
+  const conditionsLabel = savedStrategy ? `${title}条件` : defaults.conditionsLabel;
 
   const displayMeta: PickerStrategyDisplayMeta = {
-    title: canonicalTitle,
-    customLabel,
+    title,
+    categoryLabel,
     subtitle,
-    launchTitle: savedStrategy?.explanation ?? savedStrategy?.description ?? defaults.launchTitle,
-    launchText: savedStrategy?.description ?? defaults.launchText,
+    launchTitle: savedStrategy?.explanation?.trim() || savedStrategy?.description?.trim() || defaults.launchTitle,
+    launchText: savedStrategy?.description?.trim() || defaults.launchText,
     launchPoints:
       savedStrategy?.steps && savedStrategy.steps.length > 0 ? savedStrategy.steps : defaults.launchPoints,
+    conditionsLabel,
     isSaved: !!savedStrategy,
     savedId,
     savedStrategy,

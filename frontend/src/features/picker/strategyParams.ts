@@ -110,6 +110,33 @@ export function clearAppliedStrategyParams(params: URLSearchParams): URLSearchPa
   return next;
 }
 
+function pickNumericOrBooleanParams(
+  source: Record<string, unknown>,
+  keys: readonly string[],
+): Record<string, number | boolean> {
+  const updates: Record<string, number | boolean> = {};
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "number" && Number.isFinite(value)) updates[key] = value;
+    if (typeof value === "boolean") updates[key] = value;
+  }
+  return updates;
+}
+
+export function kunpengParamsFromRecord(params: Record<string, unknown>): Record<string, number | boolean> {
+  return mapKunpengAIParams(
+    pickNumericOrBooleanParams(params, [...KUNPENG_PARAM_KEYS, "excludeST", "excludeNewStock"]),
+  );
+}
+
+export function momentumParamsFromRecord(params: Record<string, unknown>): Record<string, number | boolean> {
+  return pickNumericOrBooleanParams(params, [...MOMENTUM_PARAM_KEYS, "excludeST", "trendAboveMA60"]);
+}
+
+export function endOfDayParamsFromRecord(params: Record<string, unknown>): Record<string, number | boolean> {
+  return pickNumericOrBooleanParams(params, [...EOD_PARAM_KEYS, "excludeST"]);
+}
+
 /** Map AI / URL params to KunpengScanner internal criteria field names. */
 export function mapKunpengAIParams(parsed: Record<string, number | boolean>): Record<string, number | boolean> {
   const mapped = { ...parsed };
