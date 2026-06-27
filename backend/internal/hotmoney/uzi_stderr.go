@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os/exec"
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 var tqdmCountRE = regexp.MustCompile(`\|\s*(\d+/\d+)\s*\[`)
@@ -51,12 +53,22 @@ func UZIStderrToProgress(line string) string {
 }
 
 // formatUZIProcessError builds a user-facing message from subprocess failure.
-func formatUZIProcessError(waitErr error, stderrLines []string) string {
+// ctx is the CommandContext passed to exec; when it times out Go sends SIGKILL and Wait()
+// returns "signal: killed" rather than context.DeadlineExceeded.
+func formatUZIProcessError(ctx context.Context, waitErr error, stderrLines []string) string {
 	if waitErr == nil {
 		return "unknown error"
 	}
+	if ctx != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return uziTimeoutMessage()
+		}
+		if errors.Is(ctx.Err(), context.Canceled) {
+			return "已取消"
+		}
+	}
 	if errors.Is(waitErr, context.DeadlineExceeded) {
-		return "超时（可通过 HOTMONEY_UZI_TIMEOUT 延长，默认 25 分钟）"
+		return uziTimeoutMessage()
 	}
 	if errors.Is(waitErr, context.Canceled) {
 		return "已取消"
@@ -66,7 +78,40 @@ func formatUZIProcessError(waitErr error, stderrLines []string) string {
 	if len(meaningful) > 0 {
 		return tailLines(meaningful, 8)
 	}
+	if isProcessSignalKilled(waitErr) {
+		return uziSignalKilledMessage()
+	}
 	return waitErr.Error()
+}
+
+func uziTimeoutMessage() string {
+	return fmt.Sprintf(
+		"超时（当前 HOTMONEY_UZI_TIMEOUT=%s，可在 backend/.env 延长；lite 模式通常 5–15 分钟）",
+		UZIReportTimeout(),
+	)
+}
+
+func uziSignalKilledMessage() string {
+	return "进程被系统强制终止（常见于 VPS 内存不足 OOM，或代理/网关超时后服务端杀进程）。" +
+		"请执行 free -h 与 dmesg | grep -i oom 排查；生产环境务必 HOTMONEY_UZI_DEPTH=lite，建议 RAM ≥ 2GB；" +
+		"若走 Nginx 反代，proxy_read_timeout 需 ≥ HOTMONEY_UZI_TIMEOUT"
+}
+
+func isProcessSignalKilled(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(strings.TrimSpace(err.Error()))
+	if strings.Contains(msg, "signal: killed") || strings.Contains(msg, "signal killed") {
+		return true
+	}
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		if ws, ok := exitErr.Sys().(syscall.WaitStatus); ok && ws.Signaled() && ws.Signal() == syscall.SIGKILL {
+			return true
+		}
+	}
+	return false
 }
 
 func meaningfulStderrLines(stderrLines []string) []string {
@@ -103,6 +148,12 @@ func UserFacingUZIError(err error) string {
 	msg = strings.TrimPrefix(msg, "uzi report:")
 	msg = strings.TrimSpace(msg)
 	msg = StripTqdmFromError(msg)
+	if isProcessSignalKilled(errors.New(msg)) || msg == uziSignalKilledMessage() {
+		return uziSignalKilledMessage()
+	}
+	if strings.Contains(msg, "超时（当前 HOTMONEY_UZI_TIMEOUT") {
+		return msg
+	}
 	if isUZIPythonSyntaxError(msg) {
 		return uziPythonTooOldMessage(uziPython(), uziPythonVersionLine(context.Background(), uziPython()))
 	}
@@ -233,7 +284,7 @@ func NormalizeTqdmBuffer(raw string) string {
 }
 
 // FormatCapturedStderrError is a test helper mirroring failure-path error formatting.
-func FormatCapturedStderrError(waitErr error, stderrRaw string) string {
+func FormatCapturedStderrError(ctx context.Context, waitErr error, stderrRaw string) string {
 	var lines []string
 	for _, part := range strings.FieldsFunc(stderrRaw, func(r rune) bool { return r == '\r' || r == '\n' }) {
 		part = strings.TrimSpace(part)
@@ -241,7 +292,7 @@ func FormatCapturedStderrError(waitErr error, stderrRaw string) string {
 			lines = append(lines, part)
 		}
 	}
-	msg := formatUZIProcessError(waitErr, lines)
+	msg := formatUZIProcessError(ctx, waitErr, lines)
 	return fmt.Sprintf("uzi report: %s", msg)
 }
 

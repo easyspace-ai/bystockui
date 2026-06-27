@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestIsTqdmProgressLine(t *testing.T) {
@@ -36,7 +37,7 @@ func TestUZIStderrToProgress(t *testing.T) {
 
 func TestFormatCapturedStderrError(t *testing.T) {
 	raw := "\r  0%|          | 0/58 [00:00<?, ?it/s]\r  2%|▏         | 1/58 [00:01<01:06,  1.17s/it]\nModuleNotFoundError: No module named 'akshare'"
-	msg := FormatCapturedStderrError(errors.New("exit status 1"), raw)
+	msg := FormatCapturedStderrError(context.Background(), errors.New("exit status 1"), raw)
 	if strings.Contains(msg, "%|") {
 		t.Fatalf("tqdm leaked into error: %q", msg)
 	}
@@ -47,7 +48,7 @@ func TestFormatCapturedStderrError(t *testing.T) {
 
 func TestFormatCapturedStderrErrorTqdmOnly(t *testing.T) {
 	raw := "\r  0%|          | 0/58 [00:00<?, ?it/s]\r  2%|▏         | 1/58 [00:01<01:06,  1.17s/it]"
-	msg := FormatCapturedStderrError(errors.New("exit status 1"), raw)
+	msg := FormatCapturedStderrError(context.Background(), errors.New("exit status 1"), raw)
 	if strings.Contains(msg, "%|") {
 		t.Fatalf("tqdm leaked into error: %q", msg)
 	}
@@ -57,9 +58,26 @@ func TestFormatCapturedStderrErrorTqdmOnly(t *testing.T) {
 }
 
 func TestFormatCapturedStderrErrorTimeout(t *testing.T) {
-	msg := FormatCapturedStderrError(context.DeadlineExceeded, "")
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	msg := FormatCapturedStderrError(ctx, errors.New("signal: killed"), "")
 	if !strings.Contains(msg, "超时") {
-		t.Fatalf("expected timeout message: %q", msg)
+		t.Fatalf("expected timeout message for expired ctx + signal killed: %q", msg)
+	}
+}
+
+func TestFormatCapturedStderrErrorSignalKilledOOM(t *testing.T) {
+	msg := FormatCapturedStderrError(context.Background(), errors.New("signal: killed"), "")
+	if !strings.Contains(msg, "OOM") && !strings.Contains(msg, "内存") {
+		t.Fatalf("expected OOM hint for signal killed: %q", msg)
+	}
+}
+
+func TestUserFacingUZIErrorSignalKilled(t *testing.T) {
+	raw := errors.New("uzi report: signal: killed")
+	got := UserFacingUZIError(raw)
+	if !strings.Contains(got, "内存") && !strings.Contains(got, "OOM") {
+		t.Fatalf("expected user-facing OOM hint: %q", got)
 	}
 }
 

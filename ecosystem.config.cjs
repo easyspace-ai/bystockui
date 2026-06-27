@@ -18,6 +18,8 @@
  * 勿用 pm2 resurrect 除非 pm2 save 后且 pm2 startup 已配置。
  *
  * 游资 UZI 报告需 Python 3.10+：在 backend/.env 设置 HOTMONEY_UZI_PYTHON（见 .env.example）
+ * UZI lite 模式建议 VPS RAM ≥ 2GB；OOM 时 dmesg 可见 killed process，务必 HOTMONEY_UZI_DEPTH=lite
+ * Nginx 反代 SSE 需 proxy_read_timeout ≥ HOTMONEY_UZI_TIMEOUT（默认 25m）
  */
 'use strict';
 

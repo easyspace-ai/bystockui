@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"aistock/backend/internal/hotmoney"
 	"aistock/backend/internal/workbench/ports"
@@ -340,6 +341,21 @@ func (h *HotMoneyHandler) chatStreamUZI(
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), hotmoney.UZIReportTimeout())
 	defer cancel()
+
+	heartbeatCtx, stopHeartbeat := context.WithCancel(ctx)
+	defer stopHeartbeat()
+	go func() {
+		ticker := time.NewTicker(20 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-heartbeatCtx.Done():
+				return
+			case <-ticker.C:
+				writeSSE(hotmoney.ProgressEvent{Stage: "uzi", Message: "UZI 报告生成中，请稍候…"})
+			}
+		}
+	}()
 
 	result, err := hotmoney.TryUZIReport(ctx, uziDir, tsCode,
 		func(line string) {

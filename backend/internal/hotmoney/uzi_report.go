@@ -89,6 +89,8 @@ func TryUZIReport(ctx context.Context, uziDir, tsCode string, onStdout, onStderr
 		return nil, fmt.Errorf("uzi report: start: %w", err)
 	}
 
+	log.Printf("hotmoney uzi report start ts=%s depth=%s timeout=%s dir=%s", tsCode, depth, UZIReportTimeout(), uziDir)
+
 	stderrTracker := &uziStderrTracker{}
 	stdoutTracker := &uziStdoutTracker{}
 	streamSubprocessIO(stdout, stderr, onStdout, onStderr, stderrTracker, stdoutTracker)
@@ -102,7 +104,7 @@ func TryUZIReport(ctx context.Context, uziDir, tsCode string, onStdout, onStderr
 	}
 
 	if waitErr != nil {
-		msg := formatUZIProcessError(waitErr, stderrTracker.snapshot())
+		msg := formatUZIProcessError(ctx, waitErr, stderrTracker.snapshot())
 		stderrTail := tailLines(meaningfulStderrLines(stderrTracker.snapshot()), 12)
 		stdoutTail := tailLines(stdoutTracker.snapshot(), 12)
 		log.Printf("hotmoney uzi report failed ts=%s dir=%s: %s", tsCode, uziDir, msg)

@@ -1,6 +1,7 @@
 package hotmoney
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -13,7 +14,7 @@ func TestIsTqdmProgressLineEmbeddedCR(t *testing.T) {
 	if !IsTqdmProgressLine(line) {
 		t.Fatalf("embedded CR tqdm line should be detected: %q", line)
 	}
-	msg := formatUZIProcessError(errors.New("exit status 1"), []string{line})
+	msg := formatUZIProcessError(context.Background(), errors.New("exit status 1"), []string{line})
 	if strings.Contains(msg, "%|") {
 		t.Fatalf("tqdm should not leak into error: %q", msg)
 	}
