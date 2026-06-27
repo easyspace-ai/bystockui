@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./styles/saas-design-system.css";
+@import "./styles/openui-compat.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+    /* === COMPACT Color Palette - Professional Finance === */
+    --color-primary: #1e40af;
+    --color-primary-foreground: #ffffff;
+    --color-secondary: #f4f4f5;
+    --color-secondary-foreground: #52525b;
+    --color-muted: #f4f4f5;
+    --color-muted-foreground: #71717a;
+    --color-accent: #f4f4f5;
+    --color-accent-foreground: #18181b;
+    --color-destructive: #dc2626;
+    --color-destructive-foreground: #ffffff;
+    --color-border: rgba(24, 24, 27, 0.1);
+    --color-input: rgba(24, 24, 27, 0.14);
+    --color-ring: rgba(37, 99, 235, 0.5);
+
+    /* Chart Colors - Professional Finance */
+    --color-chart-1: #1e40af;
+    --color-chart-2: #059669;
+    --color-chart-3: #dc2626;
+    --color-chart-4: #d97706;
+    --color-chart-5: #3f3f46;
+
+    /* Background & Foreground */
+    --color-background: #ffffff;
+    --color-foreground: #18181b;
+    --color-card: #ffffff;
+    --color-card-foreground: #18181b;
+    --color-popover: #ffffff;
+    --color-popover-foreground: #18181b;
+
+    /* Sidebar */
+    --color-sidebar: #fafafa;
+    --color-sidebar-foreground: #18181b;
+    --color-sidebar-primary: #1e40af;
+    --color-sidebar-primary-foreground: #ffffff;
+    --color-sidebar-accent: #f4f4f5;
+    --color-sidebar-accent-foreground: #18181b;
+    --color-sidebar-border: rgba(24, 24, 27, 0.06);
+    --color-sidebar-ring: rgba(37, 99, 235, 0.5);
+
+    /* === COMPACT Spacing & Radius === */
+    --radius-sm: 0.25rem;     /* 4px */
+    --radius-md: 0.375rem;    /* 6px */
+    --radius-lg: 0.5rem;       /* 8px */
+    --radius-xl: 0.625rem;     /* 10px */
+    --radius-2xl: 0.75rem;     /* 12px */
+}
+
+.dark {
+    --color-background: #09090b;
+    --color-foreground: #fafafa;
+    --color-card: #18181b;
+    --color-card-foreground: #fafafa;
+    --color-popover: #18181b;
+    --color-popover-foreground: #fafafa;
+    --color-primary: #3b82f6;
+    --color-primary-foreground: #09090b;
+    --color-secondary: #27272a;
+    --color-secondary-foreground: #fafafa;
+    --color-muted: #27272a;
+    --color-muted-foreground: #71717a;
+    --color-accent: #27272a;
+    --color-accent-foreground: #fafafa;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #09090b;
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-input: rgba(255, 255, 255, 0.14);
+    --color-ring: rgba(59, 130, 246, 0.5);
+    --color-sidebar: #09090b;
+    --color-sidebar-foreground: #fafafa;
+    --color-sidebar-primary: #3b82f6;
+    --color-sidebar-primary-foreground: #09090b;
+    --color-sidebar-accent: #27272a;
+    --color-sidebar-accent-foreground: #fafafa;
+    --color-sidebar-border: rgba(255, 255, 255, 0.06);
+    --color-sidebar-ring: rgba(59, 130, 246, 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+/*
+ * 选股页与全站 shadcn 变量对齐（浅色/深色随 :root /.dark 切换）
+ * 并收紧字号与间距，结果列表更紧凑
+ */
+.picker-unified {
+  --bg-primary: var(--background);
+  --bg-secondary: var(--card);
+  --bg-tertiary: var(--muted);
+  --bg-elevated: var(--popover);
+  --bg-hover: color-mix(in oklch, var(--foreground) 5%, transparent);
+  --border-primary: var(--border);
+  --border-secondary: var(--border);
+  --border-focus: var(--ring);
+  --border-accent: var(--ring);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --text-tertiary: color-mix(in oklch, var(--muted-foreground) 85%, var(--background));
+  --text-muted: var(--muted-foreground);
+  --surface-primary: var(--card);
+  --surface-secondary: var(--muted);
+  --surface-tertiary: var(--accent);
+  --color-rise: #dc2626;
+  --color-rise-bg: color-mix(in oklch, #dc2626 12%, transparent);
+  --color-fall: #059669;
+  --color-fall-bg: color-mix(in oklch, #059669 12%, transparent);
+  --color-flat: var(--muted-foreground);
+  --color-accent: #1e40af;
+  --color-primary: #1e40af;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-bg: color-mix(in oklch, #1e40af 12%, transparent);
+  --color-warning: #d97706;
+  --color-warning-bg: color-mix(in oklch, #d97706 12%, transparent);
+  --color-error: var(--destructive);
+  --color-success: #059669;
+  --color-success-hover: #047857;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 28px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --shadow-sm: 0 1px 1px oklch(0 0 0 / 0.03);
+  --shadow-md: 0 2px 4px oklch(0 0 0 / 0.05);
+  --shadow-lg: 0 4px 8px oklch(0 0 0 / 0.07);
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.15s ease;
+  --transition-slow: 0.2s ease;
+}
+
+.dark .picker-unified {
+  --shadow-sm: 0 1px 1px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 2px 4px oklch(0 0 0 / 0.4);
+  --shadow-lg: 0 4px 10px oklch(0 0 0 / 0.45);
+}

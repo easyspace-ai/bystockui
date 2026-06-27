@@ -1,0 +1,33 @@
+{
+  "adj_factor": {
+    "dataset": "adj_factor",
+    "files": [
+      "data/lake/adj_factor/part-1782455001242778000.parquet",
+      "data/lake/adj_factor/part-1782455001243270000.parquet",
+      "data/lake/adj_factor/part-1782455001243528000.parquet",
+      "data/lake/adj_factor/part-1782455001243785000.parquet"
+    ]
+  },
+  "daily": {
+    "dataset": "daily",
+    "files": [
+      "data/lake/daily/part-1782454999537751000.parquet",
+      "data/lake/daily/part-1782454999538789000.parquet",
+      "data/lake/daily/part-1782454999539847000.parquet",
+      "data/lake/daily/part-1782454999540612000.parquet"
+    ]
+  },
+  "daily_basic": {
+    "dataset": "daily_basic",
+    "files": [
+      "data/lake/daily_basic/part-1782454997388227000.parquet",
+      "data/lake/daily_basic/part-1782454997390289000.parquet"
+    ]
+  },
+  "stock_basic": {
+    "dataset": "stock_basic",
+    "files": [
+      "data/lake/stock_basic/part-1782454986763975000.parquet"
+    ]
+  }
+}

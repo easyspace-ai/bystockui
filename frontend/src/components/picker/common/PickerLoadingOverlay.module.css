@@ -1,0 +1,175 @@
+/* 选股三页统一的「分析中」小弹窗 */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem 1.125rem;
+  background: #ffffff;
+  color: var(--card-foreground);
+  border-radius: 1rem;
+  box-shadow:
+    0 8px 20px oklch(0 0 0 / 0.08),
+    0 24px 48px oklch(0 0 0 / 0.16);
+  max-width: 22rem;
+  width: min(92vw, 22rem);
+  border: 1px solid var(--border);
+  pointer-events: auto;
+}
+
+.cardHeader {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cardHeaderText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.closeButton:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.spinnerWrap {
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+}
+
+.spinnerRing {
+  position: absolute;
+  inset: 0;
+  border: 3px solid color-mix(in oklch, oklch(0.63 0.2 40) 22%, transparent);
+  border-top-color: oklch(0.63 0.2 40);
+  border-radius: 50%;
+}
+
+.spinnerCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.percentage {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 3px;
+  background: var(--muted);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, oklch(0.63 0.2 40), oklch(0.72 0.18 55));
+}
+
+.status {
+  text-align: center;
+  width: 100%;
+  padding-top: 0.625rem;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+  background: #ffffff;
+  border-radius: 0.875rem;
+  padding-bottom: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0 0 4px 0;
+}
+
+.detail {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer {
+  width: 100%;
+}
+
+.stopButton {
+  width: 100%;
+  min-height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--foreground);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.stopButton:hover {
+  background: var(--muted);
+  border-color: color-mix(in oklch, var(--ring) 30%, var(--border));
+}

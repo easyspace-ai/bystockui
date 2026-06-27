@@ -1,0 +1,26 @@
+{
+  "adj_factor": {
+    "dataset": "adj_factor",
+    "last_synced_date": "20260626",
+    "last_successful_at": "2026-06-26T14:23:21.244037+08:00",
+    "schema_version": "v1"
+  },
+  "daily": {
+    "dataset": "daily",
+    "last_synced_date": "20260626",
+    "last_successful_at": "2026-06-26T14:23:19.541272+08:00",
+    "schema_version": "v1"
+  },
+  "daily_basic": {
+    "dataset": "daily_basic",
+    "last_synced_date": "20260626",
+    "last_successful_at": "2026-06-26T14:23:17.391213+08:00",
+    "schema_version": "v1"
+  },
+  "stock_basic": {
+    "dataset": "stock_basic",
+    "last_synced_date": "20260626",
+    "last_successful_at": "2026-06-26T14:23:06.76716+08:00",
+    "schema_version": "v1"
+  }
+}

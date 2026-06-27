@@ -1,0 +1,121 @@
+/* OpenUI 子应用组件依赖的全局类与动画（与 frontend-openui/src/index.css 对齐，适配主站 Tailwind v4） */
+
+@layer components {
+  .card {
+    @apply bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm dark:shadow-lg;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg font-medium text-white transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply bg-slate-100 text-slate-700 border border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600;
+    @apply hover:bg-slate-200 dark:hover:bg-slate-600;
+  }
+
+  .input {
+    @apply px-3 py-2 rounded-lg transition-all duration-200 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100;
+    @apply placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-600;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-green {
+    @apply border border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-500/20;
+  }
+
+  .badge-red {
+    @apply border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-500/20;
+  }
+
+  .badge-blue {
+    @apply border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-500/20;
+  }
+
+  .badge-orange {
+    @apply border border-orange-200 dark:border-orange-500/30 text-orange-700 dark:text-orange-400 bg-orange-100 dark:bg-orange-500/20;
+  }
+
+  .badge-purple {
+    @apply border border-purple-200 dark:border-purple-500/30 text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/20;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: openui-animate-in 0.3s ease-out;
+  }
+
+  @keyframes openui-animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes sseRailGlow {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes sseScan {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(380%);
+    }
+  }
+
+  @keyframes sseShimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .sse-rail-glow {
+    background: linear-gradient(125deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.25));
+    animation: sseRailGlow 2.8s ease-in-out infinite;
+    filter: blur(12px);
+  }
+
+  .sse-scan-line {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(96, 165, 250, 0.95),
+      rgba(167, 139, 250, 0.85),
+      transparent
+    );
+    animation: sseScan 2.4s ease-in-out infinite;
+  }
+
+  .sse-text-shimmer {
+    background: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 45%, #e2e8f0 90%);
+    background-size: 200% 100%;
+    animation: sseShimmer 1.6s linear infinite;
+  }
+
+  .dark .sse-text-shimmer {
+    background: linear-gradient(90deg, #1e293b 0%, #334155 45%, #1e293b 90%);
+    background-size: 200% 100%;
+  }
+}
