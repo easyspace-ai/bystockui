@@ -12,7 +12,7 @@ WEBDIST  := $(BACKEND)/internal/webui/webdist
 BINARY   := $(BACKEND)/bin/aistock-server
 GO_LDFLAGS ?= -s -w
 
-.PHONY: help frontend-install frontend-build frontend-sync release backend-build run clean distclean pm2-start pm2-restart pm2-stop
+.PHONY: help frontend-install frontend-build frontend-sync release backend-build run clean distclean pm2-start pm2-restart pm2-stop pm2-fresh
 
 help:
 	@echo "aistock 构建:"
@@ -68,3 +68,9 @@ pm2-restart:
 
 pm2-stop:
 	pm2 stop aistock
+
+pm2-fresh:
+	-pm2 delete aistock
+	pm2 flush || true
+	pm2 start "$(ROOT)/ecosystem.config.cjs"
+

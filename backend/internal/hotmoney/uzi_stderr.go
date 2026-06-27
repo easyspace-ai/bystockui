@@ -103,6 +103,9 @@ func UserFacingUZIError(err error) string {
 	msg = strings.TrimPrefix(msg, "uzi report:")
 	msg = strings.TrimSpace(msg)
 	msg = StripTqdmFromError(msg)
+	if isUZIPythonSyntaxError(msg) {
+		return uziPythonTooOldMessage(uziPython())
+	}
 	if msg == "" || msg == "UZI 报告生成失败" {
 		return "UZI 报告生成失败（详见服务端日志）"
 	}

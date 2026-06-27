@@ -39,6 +39,10 @@ func TryUZIReport(ctx context.Context, uziDir, tsCode string, onStdout, onStderr
 		return nil, fmt.Errorf("uzi report: run.py not found under %s", uziDir)
 	}
 
+	if err := CheckUZIPython(ctx); err != nil {
+		return nil, fmt.Errorf("uzi report: %s", err.Error())
+	}
+
 	outDir, err := os.MkdirTemp("", "hotmoney-uzi-*")
 	if err != nil {
 		return nil, fmt.Errorf("uzi report: temp dir: %w", err)

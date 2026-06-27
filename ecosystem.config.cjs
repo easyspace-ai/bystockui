@@ -9,6 +9,15 @@
  *
  * 启动:
  *   pm2 start ecosystem.config.cjs
+ *
+ * 若报错 Process N not found / pm2_env undefined（PM2 进程表与 dump 不一致）:
+ *   pm2 delete aistock || true
+ *   pm2 flush
+ *   pm2 start ecosystem.config.cjs
+ * 仍失败则: pm2 kill && rm -f ~/.pm2/dump.pm2 && pm2 start ecosystem.config.cjs
+ * 勿用 pm2 resurrect 除非 pm2 save 后且 pm2 startup 已配置。
+ *
+ * 游资 UZI 报告需 Python 3.10+：在 backend/.env 设置 HOTMONEY_UZI_PYTHON（见 .env.example）
  */
 'use strict';
 

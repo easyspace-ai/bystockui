@@ -58,6 +58,31 @@ func uziPython() string {
 	return python
 }
 
+// CheckUZIPython verifies the configured interpreter is Python 3.10+ (required by UZI-Skill).
+func CheckUZIPython(ctx context.Context) error {
+	python := uziPython()
+	cmd := exec.CommandContext(ctx, python, "-c", "import sys; sys.exit(0 if sys.version_info[:2] >= (3, 10) else 1)")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("%s", uziPythonTooOldMessage(python))
+	}
+	return nil
+}
+
+func uziPythonTooOldMessage(python string) string {
+	return fmt.Sprintf(
+		"UZI-Skill 需要 Python 3.10+，当前 %s 版本过低。请安装 Python 3.11，在 UZI 目录执行 python3.11 -m venv .venv && pip install -r requirements.txt，并在 backend/.env 设置 HOTMONEY_UZI_PYTHON 指向 .venv/bin/python",
+		python,
+	)
+}
+
+func isUZIPythonSyntaxError(msg string) bool {
+	msg = strings.ToLower(msg)
+	return strings.Contains(msg, "future feature annotations") ||
+		strings.Contains(msg, "syntaxerror") && strings.Contains(msg, "annotations")
+}
+
 func findUZICollectScript(uziDir string) string {
 	candidates := []string{
 		filepath.Join(uziDir, "scripts", "collect_context.py"),
