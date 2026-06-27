@@ -35,11 +35,9 @@ dailyapi/*.db
 dailyapi/*.db-shm
 dailyapi/*.db-wal
 
-# ========== 后端 / 数据目录（含本地库与缓存库，易含路径与业务数据）==========
+# ========== 后端 / 数据目录（运行时生成，勿提交；用 AI_DATA_DIR + datainit 初始化）==========
 backend/.env
-backend/data/*.db
-backend/data/*.db-shm
-backend/data/*.db-wal
+backend/data/
 
 # ========== 回测 API ==========
 backtestapi/.venv/
