@@ -3,7 +3,8 @@ import { WorkbenchLayout } from "@/components/layout/WorkbenchLayout";
 import { useWorkbenchChrome } from "@/components/layout/WorkbenchChromeContext";
 import { ToastProvider } from "@/components/picker/common/Toast";
 import { PickerLeftSidebar } from "@/features/picker/PickerLeftSidebar";
-import { STRATEGY_ROUTES } from "@/features/picker/strategyParams";
+import { getSavedStrategyById } from "@/features/picker/savedStrategies";
+import { STRATEGY_LABEL_PARAM, STRATEGY_ROUTES } from "@/features/picker/strategyParams";
 import type { StrategyConfig } from "@/features/picker/AiPanel";
 
 export function PickerRouteLayout() {
@@ -20,6 +21,16 @@ export function PickerRouteLayout() {
     } else {
       params.delete("savedId");
     }
+
+    const displayName =
+      (savedId ? getSavedStrategyById(savedId)?.label : undefined)?.trim() ||
+      strategy.name?.trim();
+    if (displayName) {
+      params.set(STRATEGY_LABEL_PARAM, displayName);
+    } else {
+      params.delete(STRATEGY_LABEL_PARAM);
+    }
+
     if (strategy.params) {
       for (const [key, value] of Object.entries(strategy.params)) {
         if (value !== undefined && value !== null) {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, Send, Bot, User, Loader2, Copy, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { findSavedStrategyMatch } from "@/features/picker/savedStrategies";
 
 interface Message {
   id: string;
@@ -221,7 +222,10 @@ export function AiPanel({ onApplyStrategy, onSaveStrategy, onSaved }: AiPanelPro
                                 className="h-6 text-[10px] px-2"
                                 onClick={() => {
                                   const s = parseStrategyJson(msg.content);
-                                  if (s) onApplyStrategy(s);
+                                  if (s) {
+                                    const existing = findSavedStrategyMatch(s);
+                                    onApplyStrategy(s, existing?.id);
+                                  }
                                 }}
                               >
                                 应用策略
@@ -253,7 +257,7 @@ export function AiPanel({ onApplyStrategy, onSaveStrategy, onSaved }: AiPanelPro
                                   if (s) {
                                     const saved = onSaveStrategy(s);
                                     onSaved?.();
-                                    onApplyStrategy(s, saved?.id);
+                                    onApplyStrategy(s, saved && "id" in saved ? saved.id : undefined);
                                   }
                                 }}
                               >

@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AiPanel, type StrategyConfig } from "@/features/picker/AiPanel";
 import { SavedStrategyRenameDialog } from "@/features/picker/SavedStrategyRenameDialog";
-import { STRATEGY_ROUTES } from "@/features/picker/strategyParams";
+import { STRATEGY_LABEL_PARAM, STRATEGY_ROUTES } from "@/features/picker/strategyParams";
 import {
   BUILTIN_STRATEGIES,
   SAVED_STRATEGIES_CHANGED,
@@ -184,8 +184,13 @@ export function PickerLeftSidebar({ onApplyStrategy }: PickerLeftSidebarProps) {
     (id: string, label: string, description?: string) => {
       renameSavedStrategy(id, label, description);
       refreshSaved();
+      if (searchParams.get("savedId") === id) {
+        const params = new URLSearchParams(searchParams);
+        params.set(STRATEGY_LABEL_PARAM, label.trim());
+        navigate({ search: params.toString() }, { replace: true });
+      }
     },
-    [refreshSaved],
+    [refreshSaved, searchParams, navigate],
   );
 
   return (

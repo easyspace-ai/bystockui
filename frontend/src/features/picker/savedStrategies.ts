@@ -93,6 +93,15 @@ export function getSavedStrategyById(id: string): SavedStrategyItem | null {
   return readSavedRaw().find((s) => s.id === id) ?? null;
 }
 
+/** Match a saved library entry when re-applying an AI strategy by name + type. */
+export function findSavedStrategyMatch(config: StrategyConfig): SavedStrategyItem | null {
+  const name = config.name?.trim();
+  if (!name) return null;
+  return (
+    readSavedRaw().find((s) => s.strategy_type === config.strategy_type && s.label.trim() === name) ?? null
+  );
+}
+
 export function saveStrategy(config: StrategyConfig): SavedStrategyItem {
   const existing = readSavedRaw();
   const item: SavedStrategyItem = {

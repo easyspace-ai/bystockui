@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   SAVED_STRATEGIES_CHANGED,
@@ -6,6 +6,7 @@ import {
   renameSavedStrategy,
   type SavedStrategyItem,
 } from "@/features/picker/savedStrategies";
+import { STRATEGY_LABEL_PARAM } from "@/features/picker/strategyParams";
 
 export interface PickerStrategyDefaults {
   title: string;
@@ -33,43 +34,45 @@ export interface PickerStrategyDisplayMeta {
 }
 
 export function usePickerSavedStrategy(defaults: PickerStrategyDefaults) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const savedId = searchParams.get("savedId");
+  const strategyLabelParam = searchParams.get(STRATEGY_LABEL_PARAM);
 
-  const [savedStrategy, setSavedStrategy] = useState<SavedStrategyItem | null>(() =>
-    savedId ? getSavedStrategyById(savedId) : null,
-  );
-
-  const refreshSaved = useCallback(() => {
-    if (!savedId) {
-      setSavedStrategy(null);
-      return;
-    }
-    setSavedStrategy(getSavedStrategyById(savedId));
-  }, [savedId]);
+  const [storeVersion, setStoreVersion] = useState(0);
 
   useEffect(() => {
-    refreshSaved();
-  }, [refreshSaved]);
-
-  useEffect(() => {
-    const handler = () => refreshSaved();
+    const handler = () => setStoreVersion((version) => version + 1);
     window.addEventListener(SAVED_STRATEGIES_CHANGED, handler);
     return () => window.removeEventListener(SAVED_STRATEGIES_CHANGED, handler);
-  }, [refreshSaved]);
+  }, []);
+
+  const savedStrategy = useMemo(() => {
+    void storeVersion;
+    return savedId ? getSavedStrategyById(savedId) : null;
+  }, [savedId, storeVersion]);
 
   const renameSaved = useCallback(
     (label: string, description?: string) => {
       if (!savedId) return null;
       const updated = renameSavedStrategy(savedId, label, description);
-      if (updated) setSavedStrategy(updated);
+      if (updated) {
+        setStoreVersion((version) => version + 1);
+        const next = new URLSearchParams(searchParams);
+        next.set(STRATEGY_LABEL_PARAM, updated.label);
+        setSearchParams(next, { replace: true });
+      }
       return updated;
     },
-    [savedId],
+    [savedId, searchParams, setSearchParams],
   );
 
+  const refreshSaved = useCallback(() => {
+    setStoreVersion((version) => version + 1);
+  }, []);
+
   const canonicalTitle = defaults.title;
-  const savedLabel = savedStrategy?.label?.trim() || null;
+  const savedLabel =
+    savedStrategy?.label?.trim() || strategyLabelParam?.trim() || null;
   const title = savedLabel ?? canonicalTitle;
   const categoryLabel = canonicalTitle;
   const subtitle = savedStrategy?.description?.trim() || defaults.subtitle;

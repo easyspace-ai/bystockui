@@ -6,6 +6,9 @@ export const STRATEGY_ROUTES: Record<StrategyConfig["strategy_type"], string> = 
   kunpeng: "/picker/kunpeng",
 };
 
+/** URL param carrying the user/AI strategy display name (survives param cleanup). */
+export const STRATEGY_LABEL_PARAM = "strategyLabel";
+
 export function parseNumericParam(params: URLSearchParams, key: string): number | undefined {
   const val = params.get(key);
   if (val === null || val === "") return undefined;
