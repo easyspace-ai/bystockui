@@ -5,7 +5,7 @@ import DecisionCard from './components/DecisionCard'
 import RiskRadar from './components/RiskRadar'
 import KeyMetrics from './components/KeyMetrics'
 import { pickFirstSectionWithContent } from '@/features/analysis/config/reportSections'
-import { sanitizeReportMarkdown } from './reportText'
+import { deriveKeyMetrics, deriveRiskItems, sanitizeReportMarkdown } from './reportText'
 import KlinePanel from './components/KlinePanel'
 import { normalizeCnSymbol } from '@/lib/symbols'
 import { useAnalysisStore } from './analysisStore'
@@ -131,6 +131,15 @@ export function TradingAgentsAnalysisCenter({
   const activeSym = normalizeCnSymbol(activeSymbol)
   const reportMatchesSymbol = !reportSymbol || !activeSym || reportSymbol === activeSym
 
+  const effectiveRiskItems = useMemo(
+    () => (riskItems.length > 0 ? riskItems : deriveRiskItems(report)),
+    [riskItems, report],
+  )
+  const effectiveKeyMetrics = useMemo(
+    () => (keyMetrics.length > 0 ? keyMetrics : deriveKeyMetrics(report)),
+    [keyMetrics, report],
+  )
+
   const handleExportHtml = () => {
     if (!report) return
     downloadAnalysisHtmlReport(report, {
@@ -178,8 +187,8 @@ export function TradingAgentsAnalysisCenter({
                 stopLoss={stopLoss}
                 reasoning={finalDecision?.slice(0, 600)}
               />
-              <RiskRadar items={riskItems} />
-              <KeyMetrics items={keyMetrics} />
+              <RiskRadar items={effectiveRiskItems} />
+              <KeyMetrics items={effectiveKeyMetrics} />
             </div>
 
             {hasReport && !isAnalyzing ? (

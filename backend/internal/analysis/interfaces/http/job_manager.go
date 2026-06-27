@@ -122,22 +122,13 @@ func (jm *JobManager) UpdateJobStatus(jobID, status string) {
 // SetJobResult 设置任务结果并广播 job.completed（供非工作流调用方使用）
 func (jm *JobManager) SetJobResult(jobID string, result map[string]any) {
 	jm.CommitJobResult(jobID, result)
-	final, _ := result["final_trade_decision"].(string)
-	dir, dec := inferDirectionDecision(final)
+	payload := completionPayload(result)
+	mergePayloadExtras(result, payload)
 	jm.addEvent(jobID, JobEvent{
 		Timestamp: time.Now(),
 		Type:      "job.completed",
 		Message:   "任务已完成",
-		Data: map[string]any{
-			"result":          result,
-			"risk_items":      []any{},
-			"key_metrics":     []any{},
-			"confidence":      nil,
-			"target_price":    nil,
-			"stop_loss_price": nil,
-			"direction":       dir,
-			"decision":        dec,
-		},
+		Data:      payload,
 	})
 }
 
