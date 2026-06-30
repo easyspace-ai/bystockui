@@ -20,25 +20,27 @@ func TestGetAllAShareQuotes(t *testing.T) {
 
 func TestGetQuoteByCode(t *testing.T) {
 	c := NewClient(&clients.SettingConfig{CrawlTimeOut: 15})
-	q, err := c.GetQuoteByCode("600519")
-	if err != nil {
-		t.Fatalf("GetQuoteByCode failed: %v", err)
+	for _, code := range []string{"600519", "600903"} {
+		q, err := c.GetQuoteByCode(code)
+		if err != nil {
+			t.Fatalf("GetQuoteByCode(%s) failed: %v", code, err)
+		}
+		if q.Code != code || q.Name == "" {
+			t.Fatalf("unexpected quote: %+v", q)
+		}
+		if q.Pe <= 0 || q.Pb <= 0 {
+			t.Fatalf("%s: expected pe/pb from eastmoney, got pe=%.2f pb=%.2f", code, q.Pe, q.Pb)
+		}
+		if q.Industry == "" {
+			t.Fatalf("%s: expected industry, got empty", code)
+		}
+		if q.ListDate == "" {
+			t.Fatalf("%s: expected list date, got empty", code)
+		}
+		if q.TotalMarketCap <= 0 {
+			t.Fatalf("%s: expected total market cap, got %.2f", code, q.TotalMarketCap)
+		}
+		t.Logf("%s quote: name=%s price=%.2f pe=%.2f pb=%.2f industry=%s listDate=%s cap=%.0f亿",
+			code, q.Name, q.Price, q.Pe, q.Pb, q.Industry, q.ListDate, q.TotalMarketCap)
 	}
-	if q.Code != "600519" || q.Name == "" || q.Price <= 0 {
-		t.Fatalf("unexpected quote: %+v", q)
-	}
-	if q.Pe <= 0 || q.Pb <= 0 {
-		t.Fatalf("expected pe/pb from eastmoney, got pe=%.2f pb=%.2f", q.Pe, q.Pb)
-	}
-	if q.Industry == "" {
-		t.Fatalf("expected industry, got empty")
-	}
-	if q.ListDate == "" {
-		t.Fatalf("expected list date, got empty")
-	}
-	if q.TotalMarketCap <= 0 {
-		t.Fatalf("expected total market cap, got %.2f", q.TotalMarketCap)
-	}
-	t.Logf("600519 quote: name=%s price=%.2f pe=%.2f pb=%.2f industry=%s cap=%.0f亿",
-		q.Name, q.Price, q.Pe, q.Pb, q.Industry, q.TotalMarketCap)
 }

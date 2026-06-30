@@ -72,7 +72,15 @@ func (r *StockRepositoryImpl) GetByCode(code string) (*stock.StockInfo, error) {
 	if mq, emErr := r.emClient.GetQuoteByCode(bare); emErr == nil {
 		enrichStockInfoFromEastmoney(&info, mq)
 	} else if !found {
-		return nil, fmt.Errorf("stock not found: %s", bare)
+		if tq, tErr := r.tencentClient.GetQuote(bare); tErr == nil && strings.TrimSpace(tq.Name) != "" {
+			info.Code = bare
+			info.Name = tq.Name
+			if strings.TrimSpace(info.Market) == "" {
+				info.Market = marketDisplayName(tencentMarketCode(tq.Code))
+			}
+		} else {
+			return nil, fmt.Errorf("stock not found: %s", bare)
+		}
 	}
 
 	r.enrichStockInfoLive(&info, bare)
@@ -1335,6 +1343,17 @@ func marketDisplayName(market string) string {
 		return "京"
 	default:
 		return market
+	}
+}
+
+func tencentMarketCode(code string) string {
+	switch {
+	case strings.HasPrefix(code, "6"), strings.HasPrefix(code, "9"):
+		return "SH"
+	case strings.HasPrefix(code, "8"), strings.HasPrefix(code, "4"):
+		return "BJ"
+	default:
+		return "SZ"
 	}
 }
 

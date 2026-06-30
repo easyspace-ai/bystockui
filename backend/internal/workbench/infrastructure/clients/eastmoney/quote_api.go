@@ -39,7 +39,10 @@ type MarketQuote struct {
 	ListDate             string  `json:"listDate,omitempty"`   // 上市日期 YYYY-MM-DD（stock/get f189）
 }
 
-const quoteStockURL = "https://push2delay.eastmoney.com/api/qt/stock/get"
+const (
+	quoteStockURL       = "https://push2delay.eastmoney.com/api/qt/stock/get"
+	quoteStockURLLegacy = "https://push2.eastmoney.com/api/qt/stock/get"
+)
 
 // GetQuoteByCode 获取单只股票实时行情（东财 push2 stock/get，stock.db 无记录时的兜底）
 func (c *Client) GetQuoteByCode(code string) (*MarketQuote, error) {
@@ -112,8 +115,12 @@ func (c *Client) GetQuoteByCode(code string) (*MarketQuote, error) {
 
 	f57 := getString("f57")
 	f58 := getString("f58")
-	price := scalePrice(getFloat("f43"))
 	prevClose := scalePrice(getFloat("f60"))
+	price := scalePrice(getFloat("f43"))
+	// 休市/盘后 f43 常为 0，用昨收兜底以便仍能返回行业/概念/估值等元数据
+	if price <= 0 && prevClose > 0 {
+		price = prevClose
+	}
 	// stock/get: f170=涨跌幅×100，f169=涨跌额×100
 	changePct := getFloat("f170") / 100
 	changeAmt := scalePrice(getFloat("f169"))
@@ -161,7 +168,10 @@ func (c *Client) GetQuoteByCode(code string) (*MarketQuote, error) {
 		ListDate:             FormatListDate(getString("f189")),
 	}
 
-	if quote.Price <= 0 || quote.Code == "" || quote.Name == "" || quote.Name == "-" {
+	if quote.Code == "" || quote.Name == "" || quote.Name == "-" {
+		return nil, fmt.Errorf("invalid eastmoney quote for %s", code)
+	}
+	if quote.Price <= 0 && quote.Industry == "" && quote.ListDate == "" && quote.Pe == 0 && quote.Pb == 0 {
 		return nil, fmt.Errorf("invalid eastmoney quote for %s", code)
 	}
 	if quote.Change == 0 && quote.ChangePercent != 0 && prevClose > 0 {
@@ -240,8 +250,11 @@ func (c *Client) fetchEastMoneyJSON(baseURL string, params []string) ([]byte, er
 	}
 
 	urls := []string{baseURL}
-	if baseURL == quoteListURL {
+	switch baseURL {
+	case quoteListURL:
 		urls = append(urls, quoteListURLLegacy)
+	case quoteStockURL:
+		urls = append(urls, quoteStockURLLegacy)
 	}
 
 	for _, requestURL := range urls {
