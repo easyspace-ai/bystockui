@@ -30,7 +30,14 @@ import { WorkbenchLayout } from '@/components/layout/WorkbenchLayout'
 import { useWorkbenchChrome } from '@/components/layout/WorkbenchChromeContext'
 import { cn } from '@/lib/utils'
 import { normalizeCnSymbol } from '@/lib/symbols'
-import { searchTradingStocks } from '@/lib/tradingApi'
+import { resolveTradingSymbolInput, searchTradingStocks } from '@/lib/tradingApi'
+import {
+  marketTagForSymbol,
+  matchHint,
+  applySearchInputChange,
+  normalizeSearchQuery,
+  type SymbolSuggestion,
+} from '@/features/analysis/components/symbolSearchUtils'
 import {
   getBacktestDetail,
   listBacktestJobs,
@@ -72,25 +79,6 @@ const FALLBACK_SYMBOLS = [
   { symbol: '300750.SZ', name: '宁德时代' },
   { symbol: '601318.SH', name: '中国平安' },
 ]
-
-type SymbolSuggestion = { symbol: string; name: string }
-
-function marketTagForSymbol(symbol: string): string {
-  const s = symbol.toUpperCase()
-  if (s.endsWith('.HK')) return '港股'
-  if (s.endsWith('.SH') || s.endsWith('.SZ') || s.endsWith('.BJ')) return 'A股'
-  if (/\.(US|O|N)$/i.test(s) || /^[A-Z]{1,5}$/.test(s)) return '美股'
-  return '标的'
-}
-
-function matchHint(query: string, item: SymbolSuggestion): string {
-  const q = query.trim().toUpperCase()
-  if (!q) return ''
-  const code = item.symbol.split('.')[0]?.toUpperCase() ?? ''
-  if (code.startsWith(q) || item.symbol.toUpperCase().startsWith(q)) return '前缀'
-  if (item.name.includes(query.trim())) return '名称'
-  return ''
-}
 
 function normalizeSymbol(raw: string): string {
   const value = raw.trim().toUpperCase()
@@ -452,7 +440,12 @@ export function BacktestRouteLayout() {
         setSymbolSearchResults(response.results.slice(0, 12))
       } catch {
         setSymbolSearchResults(
-          FALLBACK_SYMBOLS.filter((item) => item.symbol.includes(keyword.toUpperCase()) || item.name.includes(keyword)),
+          FALLBACK_SYMBOLS.filter(
+            (item) =>
+              item.symbol.includes(keyword.toUpperCase()) ||
+              item.name.includes(keyword) ||
+              item.name.includes(keyword.trim()),
+          ),
         )
       } finally {
         setSymbolSuggestLoading(false)
@@ -563,6 +556,21 @@ export function BacktestRouteLayout() {
     setSelectedSymbol(nextSymbol)
     setSymbolInput(nextSymbol)
     setSelectedSymbolName(name || '')
+  }
+
+  const resolveAndApplySymbol = async (
+    raw: string,
+    name?: string,
+    suggestions: SymbolSuggestion[] = symbolSearchResults,
+    highlightIdx = symbolHighlight,
+  ) => {
+    const resolved = await resolveTradingSymbolInput(raw, suggestions, highlightIdx)
+    if (resolved) {
+      applySymbol(resolved.symbol, resolved.name ?? name)
+      setSymbolPickerOpen(false)
+      return
+    }
+    applySymbol(raw, name)
   }
 
   const applySymbolFromSuggestion = (item: SymbolSuggestion) => {
@@ -688,8 +696,11 @@ export function BacktestRouteLayout() {
                   value={symbolInput}
                   autoComplete="off"
                   onChange={(event) => {
-                    setSymbolInput(event.target.value.toUpperCase())
+                    setSymbolInput(applySearchInputChange(event.target.value, event.nativeEvent.isComposing))
                     setSymbolPickerOpen(true)
+                  }}
+                  onCompositionEnd={(event) => {
+                    setSymbolInput(normalizeSearchQuery(event.currentTarget.value))
                   }}
                   onFocus={() => {
                     if (symbolBlurCloseRef.current) window.clearTimeout(symbolBlurCloseRef.current)
@@ -698,7 +709,7 @@ export function BacktestRouteLayout() {
                   onBlur={() => {
                     symbolBlurCloseRef.current = window.setTimeout(() => {
                       setSymbolPickerOpen(false)
-                      applySymbol(symbolInput, symbolSearchResults[0]?.name)
+                      void resolveAndApplySymbol(symbolInput, symbolSearchResults[0]?.name)
                     }, 160)
                   }}
                   onKeyDown={(event) => {
@@ -723,7 +734,8 @@ export function BacktestRouteLayout() {
                         applySymbolFromSuggestion(symbolSearchResults[symbolHighlight])
                         return
                       }
-                      applySymbol(symbolInput, symbolSearchResults[0]?.name)
+                      event.preventDefault()
+                      void resolveAndApplySymbol(symbolInput, symbolSearchResults[0]?.name)
                     }
                   }}
                   className={cn(

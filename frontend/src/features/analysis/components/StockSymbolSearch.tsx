@@ -3,8 +3,15 @@ import { Command, Loader2, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { normalizeCnSymbol } from '@/lib/symbols'
-import { searchTradingStocks } from '@/lib/tradingApi'
-import { marketTagForSymbol, matchHint, type SymbolSuggestion } from './symbolSearchUtils'
+import { resolveTradingSymbolInput, searchTradingStocks } from '@/lib/tradingApi'
+import {
+  applySearchInputChange,
+  isLikelyStockCode,
+  marketTagForSymbol,
+  matchHint,
+  normalizeSearchQuery,
+  type SymbolSuggestion,
+} from './symbolSearchUtils'
 
 export type StockSymbolSearchProps = {
   value: string
@@ -95,14 +102,25 @@ export function StockSymbolSearch({
     [onChange],
   )
 
-  const commitRaw = useCallback(() => {
+  const commitRaw = useCallback(async () => {
     const raw = inputValue.trim()
     if (!raw) return
-    const sym = normalizeCnSymbol(raw) || raw.toUpperCase()
-    setInputValue(sym)
-    onChange(sym)
-    setPickerOpen(false)
-  }, [inputValue, onChange])
+
+    if (isLikelyStockCode(raw)) {
+      const sym = normalizeCnSymbol(raw) || raw.toUpperCase()
+      setInputValue(sym)
+      onChange(sym)
+      setPickerOpen(false)
+      return
+    }
+
+    const resolved = await resolveTradingSymbolInput(raw, suggestions, highlight)
+    if (resolved) {
+      setInputValue(resolved.symbol)
+      onChange(resolved.symbol, resolved.name)
+      setPickerOpen(false)
+    }
+  }, [highlight, inputValue, onChange, suggestions])
 
   return (
     <div className={cn('relative z-10 flex-1 min-w-0', className)}>
@@ -113,8 +131,11 @@ export function StockSymbolSearch({
           value={inputValue}
           autoComplete="off"
           onChange={(e) => {
-            setInputValue(e.target.value.toUpperCase())
+            setInputValue(applySearchInputChange(e.target.value, e.nativeEvent.isComposing))
             setPickerOpen(true)
+          }}
+          onCompositionEnd={(e) => {
+            setInputValue(normalizeSearchQuery(e.currentTarget.value))
           }}
           onFocus={() => {
             if (blurCloseRef.current) window.clearTimeout(blurCloseRef.current)
@@ -140,12 +161,12 @@ export function StockSymbolSearch({
               return
             }
             if (e.key === 'Enter') {
+              e.preventDefault()
               if (pickerOpen && suggestions[highlight]) {
-                e.preventDefault()
                 applySuggestion(suggestions[highlight])
                 return
               }
-              commitRaw()
+              void commitRaw()
             }
           }}
           className={cn(
@@ -175,7 +196,7 @@ export function StockSymbolSearch({
           ) : null}
           {!loading && !suggestions.length && inputValue.trim() ? (
             <div className="px-3 py-3 text-xs leading-relaxed text-slate-500">
-              暂无匹配项，按 Enter 直接使用输入代码
+              暂无匹配项，可继续输入或按 Enter 尝试解析名称
             </div>
           ) : null}
           {suggestions.map((item, idx) => {

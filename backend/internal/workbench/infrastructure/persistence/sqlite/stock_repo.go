@@ -132,26 +132,53 @@ func (r *StockRepositoryImpl) List(market, industry, concept string, page, pageS
 	return results, total, err
 }
 
-// Search 搜索股票
+// Search 搜索股票（代码/名称模糊匹配，按相关度排序）
 func (r *StockRepositoryImpl) Search(keyword string) ([]stock.StockInfo, error) {
-	// v2：先前会把空结果写入缓存，导致长期得不到数据；换 key 使旧缓存失效
-	cacheKey := cache.GenerateKey("stock", "search", "v2", keyword)
+	keyword = strings.TrimSpace(keyword)
+	if keyword == "" {
+		return nil, nil
+	}
+
+	// v3：支持中文名称 + 模糊排序；换 key 使旧缓存失效
+	cacheKey := cache.GenerateKey("stock", "search", "v3", keyword)
 	var results []stock.StockInfo
 
 	if r.cache.Get(cacheKey, &results) {
 		return results, nil
 	}
 
-	err := r.db.Where("code LIKE ? OR name LIKE ?", "%"+keyword+"%", "%"+keyword+"%").
-		Limit(50).
+	kwUpper := strings.ToUpper(keyword)
+	pattern := "%" + keyword + "%"
+	codePattern := "%" + kwUpper + "%"
+
+	err := r.db.Where(
+		"code LIKE ? OR UPPER(code) LIKE ? OR name LIKE ?",
+		pattern, codePattern, pattern,
+	).
+		Limit(200).
 		Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(results) == 0 && containsHan(keyword) {
+		results, err = r.searchStocksBySubsequence(keyword)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	results = rankStockSearchResults(keyword, results)
+	if len(results) > 50 {
+		results = results[:50]
+	}
 
 	// 空结果不写入缓存，否则在库尚未同步时会把「无数据」固定 5 分钟
-	if err == nil && len(results) > 0 {
+	if len(results) > 0 {
 		r.cache.Set(cacheKey, results, 5*time.Minute)
 	}
 
-	return results, err
+	return results, nil
 }
 
 // GetQuote 获取实时行情

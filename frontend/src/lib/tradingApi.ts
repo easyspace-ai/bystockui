@@ -1,5 +1,10 @@
 import { searchStocks, type StockSearchItem } from "@/lib/marketApi";
 import { normalizeCnSymbol } from "@/lib/symbols";
+import {
+  isLikelyStockCode,
+  rankSymbolSuggestions,
+  type SymbolSuggestion,
+} from "@/features/analysis/components/symbolSearchUtils";
 
 export interface TradingApiMessage {
   role: string;
@@ -208,6 +213,42 @@ async function searchTdxStocksForTrading(keyword: string): Promise<Array<{ symbo
   }
 }
 
+function mapStockSearchResults(items: StockSearchItem[]): SymbolSuggestion[] {
+  return items.map((item) => ({
+    symbol: tradingSymbolFromStockSearchItem(item),
+    name: item.name,
+  }));
+}
+
+/** 将用户输入（代码或中文名称）解析为 ts_code */
+export async function resolveTradingSymbolInput(
+  raw: string,
+  suggestions: SymbolSuggestion[] = [],
+  highlightIdx = 0,
+): Promise<{ symbol: string; name?: string } | null> {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  if (isLikelyStockCode(trimmed)) {
+    const symbol = normalizeCnSymbol(trimmed) || trimmed.toUpperCase();
+    return { symbol };
+  }
+
+  const exact = suggestions.find((item) => item.name === trimmed);
+  const pick = exact ?? suggestions[highlightIdx] ?? suggestions[0];
+  if (pick) {
+    const symbol = normalizeCnSymbol(pick.symbol) || pick.symbol.trim().toUpperCase();
+    return { symbol, name: pick.name };
+  }
+
+  const { results } = await searchTradingStocks(trimmed.replace(/\.[A-Z]+$/i, ""));
+  const searchExact = results.find((item) => item.name === trimmed);
+  const first = searchExact ?? results[0];
+  if (!first) return null;
+  const symbol = normalizeCnSymbol(first.symbol) || first.symbol.trim().toUpperCase();
+  return { symbol, name: first.name };
+}
+
 /** 标的联想：优先 stock.db（/api/v1/stock/search），无结果再试 TDX 代码表 */
 export async function searchTradingStocks(
   query: string,
@@ -216,21 +257,18 @@ export async function searchTradingStocks(
   if (!kw) {
     return { results: [] };
   }
-  let results: Array<{ symbol: string; name: string }> = [];
+  let results: SymbolSuggestion[] = [];
   try {
     const items = await searchStocks(kw);
     const arr = Array.isArray(items) ? items : [];
-    results = arr.slice(0, 50).map((item) => ({
-      symbol: tradingSymbolFromStockSearchItem(item),
-      name: item.name,
-    }));
+    results = mapStockSearchResults(arr.slice(0, 50));
   } catch {
     /* stock 接口失败或未配置时尝试 TDX */
   }
   if (results.length === 0) {
     results = await searchTdxStocksForTrading(kw);
   }
-  return { results };
+  return { results: rankSymbolSuggestions(kw, results).slice(0, 50) };
 }
 
 export interface TradingAnalysisStreamOptions {
